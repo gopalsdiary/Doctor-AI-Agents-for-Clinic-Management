@@ -3,14 +3,14 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint src --report-unused-disable-directives --max-warnings 10",
     "db:generate": "supabase gen types typescript --local > types/supabase.ts",
     "db:migrate": "supabase db push",
     "seed": "tsx scripts/seed.ts",
-    "clear": "rm -rf node_modules package-lock.json .next"
+    "clear": "rm -rf node_modules package-lock.json"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.94.0",
@@ -47,11 +47,11 @@
     "dotenv": "^17.4.2",
     "ethers": "^6.16.0",
     "lucide-react": "^1.14.0",
-    "next": "^16.2.4",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "react-hook-form": "^7.54.2",
     "react-markdown": "^10.1.0",
+    "react-router-dom": "^7.1.5",
     "resend": "^6.12.2",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
@@ -61,17 +61,25 @@
     "zustand": "^5.0.2"
   },
   "devDependencies": {
+    "@eslint/js": "^9.18.0",
     "@tailwindcss/postcss": "^4.2.4",
     "@types/node": "^22.10.5",
-    "@types/react": "^19.0.2",
-    "@types/react-dom": "^19.0.2",
+    "@types/react": "^19.0.7",
+    "@types/react-dom": "^19.0.3",
     "@types/uuid": "^10.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.21.0",
+    "@typescript-eslint/parser": "^8.21.0",
+    "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
-    "eslint": "^10.3.0",
-    "eslint-config-next": "^16.2.4",
+    "eslint": "^9.18.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.6.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^4.2.4",
     "tsx": "^4.19.2",
-    "typescript": "^6.0.3"
+    "typescript": "^5.7.3",
+    "vite": "^6.0.7",
+    "vite-tsconfig-paths": "^6.1.1"
   }
 }
