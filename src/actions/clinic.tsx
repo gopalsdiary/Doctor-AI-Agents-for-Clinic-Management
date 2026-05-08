@@ -1,9 +1,28 @@
-import React from 'react'
+import { createClient } from '@/lib/supabase/client';
 
-const clinic = () => {
-  return (
-    <div>clinic</div>
-  )
-}
+export const getClinic = async () => {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
 
-export default clinic
+  const { data, error } = await supabase
+    .from('clinics')
+    .select('*')
+    .eq('user_id', user.id)
+    .single();
+
+  if (error && error.code !== 'PGRST116') throw error;
+  return data;
+};
+
+export const updateClinic = async (clinic: any) => {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('clinics')
+    .upsert(clinic)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+};

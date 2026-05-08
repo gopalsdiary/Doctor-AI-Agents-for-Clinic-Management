@@ -4,94 +4,72 @@ import React, { useEffect, useState } from 'react'
 import { 
   Bot, 
   Save, 
-  MessageSquare, 
-  Zap, 
-  Shield, 
   Mic, 
   MicOff,
   Sparkles,
+  MessageSquare,
+  AlertCircle,
   Loader2,
-  AlertCircle
+  Zap
 } from 'lucide-react'
-import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Card } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
-import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import { createBrowserClient } from '@/lib/supabase/client'
+import { getAISettings, updateAISettings } from '@/actions/settings'
+import { useClinic } from '@/hooks/use-clinic'
 
 const AISettingsPage = () => {
+  const { clinic } = useClinic()
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [settings, setSettings] = useState({
     agent_name: 'Sarah',
-    welcome_message: 'Hello! I am Sarah, your clinical assistant. How can I help you today?',
-    prompt_instructions: 'You are a professional medical clinic assistant. Your goal is to help patients book appointments, answer questions about our services, and provide general clinic information. Do not provide medical advice.',
-    voice_enabled: false,
+    welcome_message: 'Hello! I am your AI assistant. How can I help you today?',
+    prompt_instructions: '',
+    voice_enabled: false
   })
-
-  const supabase = createBrowserClient()
 
   useEffect(() => {
     const fetchSettings = async () => {
-      setIsLoading(true)
+      if (!clinic?.id) return
       try {
-        const { data, error } = await supabase
-          .from('ai_settings')
-          .select('*')
-          .single()
-
-        if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows found"
-          toast.error("Failed to load AI settings")
-        } else if (data) {
+        const data = await getAISettings(clinic.id)
+        if (data) {
           setSettings({
             agent_name: data.agent_name || 'Sarah',
-            welcome_message: data.welcome_message || '',
+            welcome_message: data.welcome_message || 'Hello! I am your AI assistant. How can I help you today?',
             prompt_instructions: data.prompt_instructions || '',
-            voice_enabled: data.voice_enabled || false,
+            voice_enabled: data.voice_enabled || false
           })
         }
       } catch (error) {
-        console.error(error)
+        toast.error("Failed to load AI settings")
       } finally {
         setIsLoading(false)
       }
     }
 
-    fetchSettings()
-  }, [])
+    if (clinic) fetchSettings()
+  }, [clinic])
 
   const handleSave = async () => {
+    if (!clinic?.id) return
     setIsSaving(true)
     try {
-      // In a multi-tenant app, we'd need the clinic_id here.
-      // For the demo, we'll assume the RLS handles it or we're using a single row for now.
-      const { error } = await supabase
-        .from('ai_settings')
-        .upsert({
-          agent_name: settings.agent_name,
-          welcome_message: settings.welcome_message,
-          prompt_instructions: settings.prompt_instructions,
-          voice_enabled: settings.voice_enabled,
-          updated_at: new Date().toISOString(),
-        })
-
-      if (error) {
-        toast.error(error.message)
-      } else {
-        toast.success("AI settings saved successfully")
-      }
-    } catch (error) {
-      toast.error("An unexpected error occurred")
+      await updateAISettings(clinic.id, settings)
+      toast.success("AI settings saved successfully")
+    } catch (error: any) {
+      toast.error(error.message || "Failed to save settings")
     } finally {
       setIsSaving(false)
     }
   }
 
-  if (isLoading) {
+  if (isLoading && clinic) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
         <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
@@ -109,7 +87,7 @@ const AISettingsPage = () => {
         <Button 
           onClick={handleSave} 
           className="gradient-brand text-white font-bold h-11 px-6 rounded-xl shadow-lg shadow-teal-500/20"
-          disabled={isSaving}
+          disabled={isSaving || !clinic}
         >
           {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
           Save Changes
@@ -118,7 +96,6 @@ const AISettingsPage = () => {
 
       <div className="grid md:grid-cols-3 gap-8">
         <div className="md:col-span-2 space-y-6">
-          {/* General Identity */}
           <Card className="p-8 border-slate-100 shadow-sm rounded-3xl">
             <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
               <Bot className="w-5 h-5 text-teal-600" />
@@ -150,7 +127,6 @@ const AISettingsPage = () => {
             </div>
           </Card>
 
-          {/* Prompt Instructions */}
           <Card className="p-8 border-slate-100 shadow-sm rounded-3xl">
             <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
               <MessageSquare className="w-5 h-5 text-cyan-600" />
@@ -180,7 +156,6 @@ const AISettingsPage = () => {
         </div>
 
         <div className="space-y-6">
-          {/* Voice Settings */}
           <Card className="p-6 border-slate-100 shadow-sm rounded-3xl">
             <h3 className="text-sm font-bold text-slate-900 mb-6 uppercase tracking-widest text-slate-400">Features</h3>
             
@@ -210,7 +185,6 @@ const AISettingsPage = () => {
             </div>
           </Card>
 
-          {/* Quick Preview */}
           <Card className="p-6 border-slate-100 shadow-sm rounded-3xl bg-slate-900 text-white">
             <h3 className="text-xs font-bold mb-4 flex items-center gap-2">
               <Sparkles className="w-3 h-3 text-teal-400" />
