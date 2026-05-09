@@ -33,8 +33,13 @@ import { toast } from 'sonner'
 import { useAppointments } from '@/hooks/use-appointments'
 import { format } from 'date-fns'
 
-const AppointmentTable = () => {
+const AppointmentTable = ({ searchTerm = '' }: { searchTerm?: string }) => {
   const { appointments, isLoading, updateAppointmentStatus } = useAppointments()
+
+  const filteredAppointments = appointments.filter((appt: any) =>
+    appt.patient?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    appt.service?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
   const handleStatusChange = async (id: string, status: string) => {
     try {
@@ -63,14 +68,14 @@ const AppointmentTable = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {appointments.length === 0 ? (
+          {filteredAppointments.length === 0 ? (
             <TableRow>
               <TableCell colSpan={6} className="h-32 text-center text-slate-500">
-                No appointments found.
+                {searchTerm ? 'No matches found.' : 'No appointments found.'}
               </TableCell>
             </TableRow>
           ) : (
-            appointments.map((appt: any) => (
+            filteredAppointments.map((appt: any) => (
               <TableRow key={appt.id} className="hover:bg-slate-50 transition-colors border-slate-100">
                 <TableCell>
                   <div className="flex items-center gap-3 py-1">

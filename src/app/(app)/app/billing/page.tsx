@@ -2,10 +2,11 @@
 
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { CreditCard, ReceiptText, Sparkles, ArrowRight, CheckCircle2, Loader2 } from 'lucide-react'
+import { CreditCard, ReceiptText, Sparkles, ArrowRight, CheckCircle2, Loader2, Download, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { useClinic } from '@/hooks/use-clinic'
@@ -14,6 +15,7 @@ export default function BillingPage() {
   const { clinic, isLoading: isLoadingClinic } = useClinic()
   const [invoices, setInvoices] = useState<any[]>([])
   const [isLoadingInvoices, setIsLoadingInvoices] = useState(true)
+  const [selectedInvoice, setSelectedInvoice] = useState<any>(null)
 
   useEffect(() => {
     const fetchInvoices = async () => {
@@ -36,13 +38,24 @@ export default function BillingPage() {
     }
   }, [clinic, isLoadingClinic])
 
-  const handleUpgrade = () => {
+  const handleUpgrade = async () => {
+    if (!clinic?.id) return
+    const supabase = createClient()
+
     toast.promise(
-      new Promise((resolve) => setTimeout(resolve, 1500)),
+      async () => {
+        const { error } = await supabase
+          .from('clinics')
+          .update({ subscription_status: 'growth' })
+          .eq('id', clinic.id)
+
+        if (error) throw error
+        // window.location.reload() // Or use query client invalidation
+      },
       {
-        loading: 'Redirecting to checkout...',
+        loading: 'Processing upgrade...',
         success: 'Welcome to the Growth plan!',
-        error: 'Payment failed. Please try again.',
+        error: 'Failed to upgrade. Please try again.',
       }
     )
   }
@@ -123,7 +136,11 @@ export default function BillingPage() {
               </div>
             ) : (
               invoices.map((invoice) => (
-                <div key={invoice.id} className="flex items-center justify-between rounded-2xl border border-slate-100 px-5 py-4 hover:bg-slate-50 transition-colors">
+                <div
+                  key={invoice.id}
+                  className="flex items-center justify-between rounded-2xl border border-slate-100 px-5 py-4 hover:bg-slate-50 transition-colors cursor-pointer"
+                  onClick={() => setSelectedInvoice(invoice)}
+                >
                   <div>
                     <div className="font-bold text-slate-900">{invoice.id.slice(0, 8).toUpperCase()}</div>
                     <div className="text-xs text-slate-500 font-medium">{new Date(invoice.created_at).toLocaleDateString()}</div>
@@ -143,6 +160,56 @@ export default function BillingPage() {
           </div>
         </Card>
       </div>
+
+      <Dialog open={!!selectedInvoice} onOpenChange={() => setSelectedInvoice(null)}>
+        <DialogContent className="max-w-md rounded-3xl p-8">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-xl gradient-brand flex items-center justify-center text-white">
+                <ReceiptText className="w-6 h-6" />
+              </div>
+              <DialogTitle className="text-2xl font-bold">Receipt</DialogTitle>
+            </div>
+            <DialogDescription>
+              Details for invoice #{selectedInvoice?.id.slice(0, 8).toUpperCase()}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-6 space-y-6">
+            <div className="flex justify-between border-b border-slate-100 pb-4">
+              <span className="text-slate-500 font-medium">Date</span>
+              <span className="text-slate-900 font-bold">{selectedInvoice && new Date(selectedInvoice.created_at).toLocaleDateString()}</span>
+            </div>
+            <div className="flex justify-between border-b border-slate-100 pb-4">
+              <span className="text-slate-500 font-medium">Clinic</span>
+              <span className="text-slate-900 font-bold">{clinic?.name}</span>
+            </div>
+            <div className="flex justify-between border-b border-slate-100 pb-4">
+              <span className="text-slate-500 font-medium">Status</span>
+              <Badge variant="outline" className={cn(
+                "uppercase font-bold text-[10px]",
+                selectedInvoice?.status === 'paid' ? "text-emerald-600 border-emerald-100 bg-emerald-50" : "text-amber-600 border-amber-100 bg-amber-50"
+              )}>
+                {selectedInvoice?.status}
+              </Badge>
+            </div>
+            <div className="flex justify-between pt-2">
+              <span className="text-xl font-bold text-slate-900">Total Amount</span>
+              <span className="text-xl font-black text-teal-600">{selectedInvoice?.amount}</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Button variant="outline" className="rounded-xl h-12 font-bold" onClick={() => setSelectedInvoice(null)}>
+              Close
+            </Button>
+            <Button className="rounded-xl h-12 gradient-brand text-white font-bold gap-2" onClick={() => toast.success('Receipt download started...')}>
+              <Download className="w-4 h-4" />
+              Download
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

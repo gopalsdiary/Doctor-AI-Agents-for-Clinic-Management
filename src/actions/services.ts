@@ -1,10 +1,11 @@
 import { createClient } from '@/lib/supabase/client';
 
-export const getServices = async () => {
+export const getServices = async (clinicId: string) => {
   const supabase = createClient();
   const { data, error } = await supabase
     .from('services')
     .select('*')
+    .eq('clinic_id', clinicId)
     .order('name', { ascending: true });
 
   if (error) throw error;

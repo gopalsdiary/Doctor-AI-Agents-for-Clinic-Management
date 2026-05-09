@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/client';
 
-export const getAppointments = async () => {
+export const getAppointments = async (clinicId: string) => {
   const supabase = createClient();
   const { data, error } = await supabase
     .from('appointments')
@@ -9,6 +9,7 @@ export const getAppointments = async () => {
       patient:patients(name),
       service:services(name)
     `)
+    .eq('clinic_id', clinicId)
     .order('start_time', { ascending: true });
 
   if (error) throw error;

@@ -57,7 +57,7 @@ const AppointmentsPage = () => {
       </div>
 
       {/* Table Section */}
-      <AppointmentTable />
+      <AppointmentTable searchTerm={searchTerm} />
       
       <NewAppointmentModal open={isModalOpen} onOpenChange={setIsModalOpen} />
     </div>

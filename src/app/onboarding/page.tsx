@@ -50,11 +50,36 @@ const OnboardingPage = () => {
   const handleComplete = async () => {
     setIsLoading(true)
     try {
-      // In a real app, this would create the clinic record and link the user
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("No user found")
+
+      const { data: clinic, error: clinicError } = await supabase
+        .from('clinics')
+        .insert({
+          name: formData.name,
+          user_id: user.id,
+          subscription_status: 'trial'
+        })
+        .select()
+        .single()
+
+      if (clinicError) throw clinicError
+
+      // Create default AI settings
+      const { error: aiError } = await supabase
+        .from('ai_settings')
+        .insert({
+          clinic_id: clinic.id,
+          agent_name: 'Sarah',
+          welcome_message: `Hello! I am ${formData.name}'s assistant Sarah. How can I help you today?`
+        })
+
+      if (aiError) throw aiError
+
       toast.success("Clinic setup complete!")
       navigate('/app/dashboard')
-    } catch (error) {
-      toast.error("Failed to complete setup")
+    } catch (error: any) {
+      toast.error(error.message || "Failed to complete setup")
     } finally {
       setIsLoading(false)
     }
