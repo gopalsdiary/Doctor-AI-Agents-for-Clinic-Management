@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import { createClient } from '@/lib/supabase/client'
 
 const menuItems = [
   { label: 'Dashboard', icon: LayoutDashboard, href: '/app/dashboard' },
@@ -32,18 +33,18 @@ const menuItems = [
 const Sidebar = () => {
   const { pathname } = useLocation()
   const navigate = useNavigate()
+  const supabase = createClient()
 
   const handleLogout = async () => {
     try {
-      const response = await fetch('/api/auth/signout', { method: 'POST' })
+      const { error } = await supabase.auth.signOut()
 
-      if (!response.ok) {
-        throw new Error('Unable to sign out')
+      if (error) {
+        throw error
       }
 
       toast.success('Signed out')
       navigate('/login')
-      // router.refresh()
     } catch {
       toast.error('Unable to sign out')
     }
