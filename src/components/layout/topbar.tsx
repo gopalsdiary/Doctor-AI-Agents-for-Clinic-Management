@@ -33,6 +33,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { NewAppointmentModal } from '@/components/appointments/new-appointment-modal'
+import { createClient } from '@/lib/supabase/client'
 
 const mobileNavItems = [
   { label: 'Dashboard', href: '/app/dashboard', icon: LayoutDashboard },
@@ -48,20 +49,20 @@ const mobileNavItems = [
 const Topbar = () => {
   const { pathname } = useLocation()
   const navigate = useNavigate()
+  const supabase = createClient()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   const handleLogout = async () => {
     try {
-      const response = await fetch('/api/auth/signout', { method: 'POST' })
+      const { error } = await supabase.auth.signOut()
 
-      if (!response.ok) {
-        throw new Error('Unable to sign out')
+      if (error) {
+        throw error
       }
 
       toast.success('Signed out')
       navigate('/login')
-      // router.refresh()
     } catch {
       toast.error('Unable to sign out')
     }

@@ -11,6 +11,7 @@ import { NewAppointmentModal } from '@/components/appointments/new-appointment-m
 
 const AppointmentsPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
 
   return (
     <div className="space-y-8 pb-12">
@@ -37,8 +38,10 @@ const AppointmentsPage = () => {
         <div className="relative flex-1 w-full">
           <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <Input 
-            placeholder="Search by patient name or doctor..." 
+            placeholder="Search by patient name..."
             className="pl-11 h-12 rounded-xl border-slate-200 bg-white shadow-sm focus:ring-teal-500"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         <div className="flex items-center gap-3 w-full lg:w-auto">
@@ -54,7 +57,7 @@ const AppointmentsPage = () => {
       </div>
 
       {/* Table Section */}
-      <AppointmentTable />
+      <AppointmentTable searchTerm={searchTerm} />
       
       <NewAppointmentModal open={isModalOpen} onOpenChange={setIsModalOpen} />
     </div>

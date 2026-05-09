@@ -1,17 +1,14 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { Calendar as CalendarIcon, Clock3, Bot, ArrowRight } from 'lucide-react'
+import { Calendar as CalendarIcon, Clock3, Bot, ArrowRight, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-
-const slots = [
-  { time: '09:00 AM', label: 'Alex Johnson', status: 'Confirmed' },
-  { time: '10:30 AM', label: 'Maria Garcia', status: 'Pending' },
-  { time: '01:45 PM', label: 'James Wilson', status: 'AI booked' },
-]
+import { useAppointments } from '@/hooks/use-appointments'
+import { format } from 'date-fns'
 
 export default function CalendarPage() {
+  const { appointments, isLoading } = useAppointments()
   return (
     <div className="space-y-8 pb-12">
       <div className="gradient-hero rounded-[2.5rem] p-8 lg:p-12 text-white shadow-2xl shadow-teal-900/20">
@@ -37,15 +34,31 @@ export default function CalendarPage() {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
-        {slots.map((slot) => (
-          <Card key={slot.time} className="p-6 rounded-3xl border-slate-100 shadow-sm">
+        {isLoading ? (
+          <div className="col-span-full py-12 text-center text-slate-500">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
+            Loading calendar...
+          </div>
+        ) : appointments.length === 0 ? (
+          <div className="col-span-full py-12 text-center text-slate-500">
+            No appointments scheduled yet.
+          </div>
+        ) : appointments.map((appt: any) => (
+          <Card key={appt.id} className="p-6 rounded-3xl border-slate-100 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <div className="text-lg font-bold text-slate-900">{slot.label}</div>
-              <Badge variant="outline" className="text-teal-700 border-teal-200 bg-teal-50">{slot.status}</Badge>
+              <div className="text-lg font-bold text-slate-900">{appt.patient?.name}</div>
+              <Badge variant="outline" className="text-teal-700 border-teal-200 bg-teal-50 uppercase text-[10px] font-bold">
+                {appt.status}
+              </Badge>
             </div>
-            <div className="flex items-center gap-2 text-sm text-slate-500">
-              <Clock3 className="w-4 h-4 text-teal-500" />
-              {slot.time}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm text-slate-500">
+                <Clock3 className="w-4 h-4 text-teal-500" />
+                {format(new Date(appt.start_time), 'hh:mm a')}
+              </div>
+              <div className="text-[10px] font-bold text-slate-400">
+                {format(new Date(appt.start_time), 'MMM dd')}
+              </div>
             </div>
           </Card>
         ))}

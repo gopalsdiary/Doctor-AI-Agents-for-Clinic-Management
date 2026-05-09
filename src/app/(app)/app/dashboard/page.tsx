@@ -4,8 +4,7 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { 
   Users, 
-  Calendar, 
-  TrendingUp, 
+  Calendar as CalendarIcon,
   DollarSign, 
   ArrowUpRight, 
   ArrowDownRight,
@@ -20,50 +19,55 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { toast } from 'sonner'
-
-const stats = [
-  { 
-    label: 'Total Patients', 
-    value: '1,284', 
-    change: '+12%', 
-    trend: 'up', 
-    icon: Users,
-    color: 'bg-teal-50 text-teal-600'
-  },
-  { 
-    label: 'Appointments', 
-    value: '42', 
-    change: '+8%', 
-    trend: 'up', 
-    icon: Calendar,
-    color: 'bg-cyan-50 text-cyan-600'
-  },
-  { 
-    label: 'AI-Handled', 
-    value: '28', 
-    change: '+14%', 
-    trend: 'up', 
-    icon: Bot,
-    color: 'bg-purple-50 text-purple-600'
-  },
-  { 
-    label: 'Revenue', 
-    value: '$12,480', 
-    change: '-2%', 
-    trend: 'down', 
-    icon: DollarSign,
-    color: 'bg-emerald-50 text-emerald-600'
-  },
-]
-
-const recentAppointments = [
-  { id: 1, patient: 'Alex Johnson', type: 'General Checkup', time: '09:00 AM', status: 'Confirmed', agent: 'Sarah' },
-  { id: 2, patient: 'Maria Garcia', type: 'Specialist Visit', time: '10:30 AM', status: 'Pending', agent: 'AI' },
-  { id: 3, patient: 'James Wilson', type: 'Follow-up', time: '01:45 PM', status: 'Confirmed', agent: 'Sarah' },
-  { id: 4, patient: 'Emma Brown', type: 'Consultation', time: '03:15 PM', status: 'Cancelled', agent: 'AI' },
-]
+import { useAppointments } from '@/hooks/use-appointments'
+import { format } from 'date-fns'
+import { cn } from '@/lib/utils'
 
 const DashboardPage = () => {
+  const { appointments, isLoading } = useAppointments()
+
+  // Simulated stats based on real data where possible
+  const stats = [
+    {
+      label: 'Total Patients',
+      value: '1,284', // Placeholder for now
+      change: '+12%',
+      trend: 'up',
+      icon: Users,
+      color: 'bg-teal-50 text-teal-600'
+    },
+    {
+      label: 'Appointments',
+      value: appointments.length.toString(),
+      change: '+8%',
+      trend: 'up',
+      icon: CalendarIcon,
+      color: 'bg-cyan-50 text-cyan-600'
+    },
+    {
+      label: 'AI-Handled',
+      value: appointments.filter((a: any) => a.handled_by === 'ai').length.toString(),
+      change: '+14%',
+      trend: 'up',
+      icon: Bot,
+      color: 'bg-purple-50 text-purple-600'
+    },
+    {
+      label: 'Revenue',
+      value: '$12,480', // Placeholder
+      change: '-2%',
+      trend: 'down',
+      icon: DollarSign,
+      color: 'bg-emerald-50 text-emerald-600'
+    },
+  ]
+
+  const todayAppointments = appointments.slice(0, 5)
+
+  if (isLoading) {
+    return <div className="p-8 text-center text-slate-500">Loading dashboard...</div>
+  }
+
   return (
     <div className="space-y-8 pb-12">
       {/* Welcome Banner */}
@@ -76,15 +80,15 @@ const DashboardPage = () => {
               Your Clinic is Performing Great Today
             </div>
             <h1 className="text-4xl lg:text-5xl font-bold text-white mb-4 tracking-tight">
-              Welcome Back, <br /> Dr. Jane Smith!
+              Welcome Back, <br /> Doctor!
             </h1>
             <p className="text-teal-50 text-lg max-w-md opacity-90">
-              Your AI agent Sarah has handled 12 inquiries and booked 3 appointments since this morning.
+              Your AI agent has handled {appointments.filter((a: any) => a.handled_by === 'ai').length} bookings so far.
             </p>
           </div>
           <div className="flex gap-4">
             <Button asChild size="lg" className="bg-white text-teal-700 hover:bg-slate-100 font-bold rounded-2xl h-14 px-8 shadow-xl">
-              <Link to="#stats">View Analytics</Link>
+              <Link to="/app/appointments">View Analytics</Link>
             </Button>
             <Button asChild size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 rounded-2xl h-14 px-8 backdrop-blur-sm">
               <Link to="/app/ai-settings">
@@ -125,8 +129,8 @@ const DashboardPage = () => {
         <Card className="lg:col-span-2 p-8 border-slate-100 shadow-sm rounded-3xl">
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h3 className="text-xl font-bold text-slate-900">Today's Appointments</h3>
-              <p className="text-sm text-slate-500">Monitor and manage your daily visits.</p>
+              <h3 className="text-xl font-bold text-slate-900">Upcoming Appointments</h3>
+              <p className="text-sm text-slate-500">Monitor and manage your upcoming visits.</p>
             </div>
             <Button asChild variant="ghost" className="text-teal-600 font-bold hover:bg-teal-50">
               <Link to="/app/calendar">View Calendar</Link>
@@ -134,58 +138,59 @@ const DashboardPage = () => {
           </div>
 
           <div className="space-y-6">
-            {recentAppointments.map((appt) => (
-              <div key={appt.id} className="flex items-center justify-between p-4 rounded-2xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100 group">
-                <div className="flex items-center gap-4">
-                  <Avatar className="w-12 h-12 ring-2 ring-white shadow-sm">
-                    <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${appt.patient}`} />
-                    <AvatarFallback>{appt.patient.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <div className="font-bold text-slate-900">{appt.patient}</div>
-                    <div className="text-xs text-slate-500 flex items-center gap-2">
-                      <span className="font-medium text-teal-600">{appt.type}</span>
-                      <span className="w-1 h-1 rounded-full bg-slate-300" />
-                      <Clock className="w-3 h-3" /> {appt.time}
+            {todayAppointments.length === 0 ? (
+              <div className="py-12 text-center text-slate-500">No appointments scheduled.</div>
+            ) : (
+              todayAppointments.map((appt: any) => (
+                <div key={appt.id} className="flex items-center justify-between p-4 rounded-2xl hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100 group">
+                  <div className="flex items-center gap-4">
+                    <Avatar className="w-12 h-12 ring-2 ring-white shadow-sm">
+                      <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${appt.patient?.name}`} />
+                      <AvatarFallback>{appt.patient?.name?.split(' ').map((n: string) => n[0]).join('')}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="font-bold text-slate-900">{appt.patient?.name}</div>
+                      <div className="text-xs text-slate-500 flex items-center gap-2">
+                        <span className="font-medium text-teal-600">{appt.service?.name || 'General'}</span>
+                        <span className="w-1 h-1 rounded-full bg-slate-300" />
+                        <Clock className="w-3 h-3" /> {format(new Date(appt.start_time), 'hh:mm a')}
+                      </div>
                     </div>
                   </div>
-                </div>
-                
-                <div className="flex items-center gap-4">
-                  <div className="flex flex-col items-end">
-                    <Badge className={cn(
-                      "px-3 py-1",
-                      appt.status === 'Confirmed' ? "bg-emerald-50 text-emerald-700 border-emerald-100" :
-                      appt.status === 'Pending' ? "bg-amber-50 text-amber-700 border-amber-100" :
-                      "bg-red-50 text-red-700 border-red-100"
-                    )}>
-                      {appt.status}
-                    </Badge>
-                    <div className="text-[10px] text-slate-400 mt-1 flex items-center gap-1">
-                      {appt.agent === 'AI' ? <Bot className="w-2 h-2" /> : <Users className="w-2 h-2" />}
-                      Handled by {appt.agent}
+
+                  <div className="flex items-center gap-4">
+                    <div className="flex flex-col items-end">
+                      <Badge className={cn(
+                        "px-3 py-1",
+                        appt.status === 'confirmed' ? "bg-emerald-50 text-emerald-700 border-emerald-100" :
+                        appt.status === 'pending' ? "bg-amber-50 text-amber-700 border-amber-100" :
+                        "bg-red-50 text-red-700 border-red-100"
+                      )}>
+                        {appt.status}
+                      </Badge>
+                      <div className="text-[10px] text-slate-400 mt-1 flex items-center gap-1">
+                        {appt.handled_by === 'ai' ? <Bot className="w-2 h-2" /> : <Users className="w-2 h-2" />}
+                        Handled by {appt.handled_by === 'ai' ? 'AI' : 'Manual'}
+                      </div>
                     </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <MoreHorizontal className="w-5 h-5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48 rounded-xl p-2 border-slate-200 shadow-xl">
+                        <DropdownMenuItem asChild className="rounded-lg px-3 py-2 text-sm font-semibold focus:bg-teal-50 focus:text-teal-700 cursor-pointer">
+                          <Link to="/app/appointments">View Details</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => toast.success(`Cancellation requested for ${appt.patient?.name}`)} className="rounded-lg px-3 py-2 text-sm font-semibold text-red-500 focus:bg-red-50 focus:text-red-600 cursor-pointer">
+                          Cancel
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <MoreHorizontal className="w-5 h-5" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48 rounded-xl p-2 border-slate-200 shadow-xl">
-                      <DropdownMenuItem asChild className="rounded-lg px-3 py-2 text-sm font-semibold focus:bg-teal-50 focus:text-teal-700 cursor-pointer">
-                        <Link to="/app/appointments">View Details</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild className="rounded-lg px-3 py-2 text-sm font-semibold focus:bg-teal-50 focus:text-teal-700 cursor-pointer">
-                        <Link to="/app/calendar">Reschedule</Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={() => toast.success(`Cancellation requested for ${appt.patient}`)} className="rounded-lg px-3 py-2 text-sm font-semibold text-red-500 focus:bg-red-50 focus:text-red-600 cursor-pointer">
-                        Cancel
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
                 </div>
-              </div>
+              )
             ))}
           </div>
           
@@ -202,7 +207,7 @@ const DashboardPage = () => {
             </div>
             <div>
               <h3 className="font-bold text-slate-900">AI Performance</h3>
-              <p className="text-xs text-slate-500">Agent "Sarah" (Active)</p>
+              <p className="text-xs text-slate-500">Active</p>
             </div>
           </div>
 
@@ -229,7 +234,7 @@ const DashboardPage = () => {
               <Sparkles className="w-3 h-3" /> AI Insights
             </div>
             <p className="text-[11px] text-teal-900 leading-relaxed">
-              Based on patient interactions, Sarah recommends adding a "Telehealth" service option to capture more weekend bookings.
+              Based on patient interactions, the AI recommends adding a "Telehealth" service option to capture more weekend bookings.
             </p>
           </div>
 
@@ -241,7 +246,5 @@ const DashboardPage = () => {
     </div>
   )
 }
-
-const cn = (...classes: any[]) => classes.filter(Boolean).join(' ')
 
 export default DashboardPage

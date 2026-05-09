@@ -28,10 +28,11 @@ import AppLayout from './app/(app)/layout';
 import AuthLayout from './app/(auth)/layout';
 import WidgetLayout from './app/widget/[slug]/layout';
 
+const supabase = createClient();
+
 const App = () => {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {

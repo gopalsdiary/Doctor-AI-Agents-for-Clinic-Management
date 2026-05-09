@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react'
+import React, { useState } from 'react'
 import { Plus, Search, Filter, Mail, Phone, MoreVertical, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,15 +9,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-
-const patients = [
-  { id: 1, name: 'Alex Johnson', email: 'alex@example.com', phone: '+1 234 567 890', visits: 12, lastVisit: '2 days ago', status: 'Active' },
-  { id: 2, name: 'Maria Garcia', email: 'maria@example.com', phone: '+1 234 567 891', visits: 5, lastVisit: '1 week ago', status: 'Active' },
-  { id: 3, name: 'James Wilson', email: 'james@example.com', phone: '+1 234 567 892', visits: 1, lastVisit: 'New Patient', status: 'New' },
-  { id: 4, name: 'Emma Brown', email: 'emma@example.com', phone: '+1 234 567 893', visits: 24, lastVisit: '1 month ago', status: 'Inactive' },
-]
+import { usePatients } from '@/hooks/use-patients'
+import { NewPatientModal } from '@/components/patients/new-patient-modal'
 
 const PatientsPage = () => {
+  const { patients, isLoading } = usePatients()
+  const [isModalOpen, setIsModalOpen] = useState(false)
   return (
     <div className="space-y-8 pb-12">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -26,7 +23,7 @@ const PatientsPage = () => {
           <p className="text-slate-500">Manage your patient records and medical history.</p>
         </div>
         
-        <Button className="h-11 rounded-xl gradient-brand text-white gap-2 font-bold shadow-lg shadow-teal-500/20 px-6" onClick={() => toast.info('Patient intake form is coming soon')}>
+        <Button className="h-11 rounded-xl gradient-brand text-white gap-2 font-bold shadow-lg shadow-teal-500/20 px-6" onClick={() => setIsModalOpen(true)}>
           <Plus className="w-4 h-4" />
           Add New Patient
         </Button>
@@ -63,7 +60,11 @@ const PatientsPage = () => {
       </div>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-6">
-        {patients.map((p) => (
+        {isLoading ? (
+          <div className="col-span-full py-12 text-center text-slate-500">Loading patients...</div>
+        ) : patients.length === 0 ? (
+          <div className="col-span-full py-12 text-center text-slate-500">No patients found.</div>
+        ) : patients.map((p: any) => (
           <Card key={p.id} className="p-6 hover-lift border-slate-100 shadow-sm rounded-3xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
               <DropdownMenu>
@@ -90,7 +91,7 @@ const PatientsPage = () => {
               <div className="relative">
                 <Avatar className="w-20 h-20 border-4 border-white shadow-lg ring-1 ring-slate-200">
                   <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${p.name}`} />
-                  <AvatarFallback>{p.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                  <AvatarFallback>{p.name.split(' ').map((n: string) => n[0]).join('')}</AvatarFallback>
                 </Avatar>
                 <Badge className={cn(
                   "absolute -bottom-1 -right-1 px-2 py-0.5 border-2 border-white",
@@ -136,6 +137,8 @@ const PatientsPage = () => {
           Load More Patients
         </Button>
       </div>
+
+      <NewPatientModal open={isModalOpen} onOpenChange={setIsModalOpen} />
     </div>
   )
 }
